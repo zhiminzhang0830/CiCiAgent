@@ -46,9 +46,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/cici-dev/cici"
-Repository = "https://github.com/cici-dev/cici"
-Issues = "https://github.com/cici-dev/cici/issues"
+Homepage = "https://github.com/zhiminzhang0830/CiCiAgent"
+Repository = "https://github.com/zhiminzhang0830/CiCiAgent"
+Issues = "https://github.com/zhiminzhang0830/CiCiAgent/issues"
 
 [project.scripts]
 cici = "cici.__main__:cli"
