@@ -393,6 +393,17 @@ class CiciApp(App):
         self.title = "cici"
         self.sub_title = self._model
         self._refresh_status()
+        banner = (
+            "[bold cyan]"
+            "  ██████╗   ██╗      ██████╗   ██╗\n"
+            " ██╔════╝   ██║     ██╔════╝   ██║\n"
+            " ██║        ██║     ██║        ██║\n"
+            " ██║        ██║     ██║        ██║\n"
+            " ╚██████╗   ██║     ╚██████╗   ██║\n"
+            "  ╚═════╝   ╚═╝      ╚═════╝   ╚═╝"
+            "[/bold cyan]"
+        )
+        self._chat_log(banner)
         self._chat_log("[bold cyan] cici[/bold cyan][dim] — minimal coding agent[/dim]")
         self._chat_log(
             "[dim]Type a request, or /clear /plan /cost /compact /memory /skills.[/dim]"
