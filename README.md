@@ -24,6 +24,11 @@
 
 ---
 
+<p align="center">
+  <img src="asserts/cici_trimmed.gif" alt="cici TUI screenshot" width="900" />
+</p>
+
+
 `cici` is an open-source coding agent that lives in your terminal. It reads your
 code, edits files, runs shell commands, talks to MCP servers, and orchestrates
 sub-agents — all from a single Python package you can fork and modify.
@@ -32,9 +37,7 @@ It is intentionally minimal: ~9k lines of dependency-light Python, no plugin
 system, no DSL, no magic. The goal is to be the *clearest* implementation of a
 modern coding agent, not the largest.
 
-<p align="center">
-  <img src="asserts/cici.png" alt="cici TUI screenshot" width="900" />
-</p>
+
 
 
 
