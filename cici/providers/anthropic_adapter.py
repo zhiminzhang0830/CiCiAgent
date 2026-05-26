@@ -83,8 +83,8 @@ class AnthropicAdapter(ProviderAdapter):
 
         ``on_tool_block_complete`` fires the instant a ``tool_use``
         content block closes (``content_block_stop``), giving the loop
-        a chance to prefetch concurrency-safe tools before the model
-        finishes generating — the same trick Claude Code uses.
+        a chance to prefetch concurrency-safe tools while the model is
+        still generating its remaining output.
         """
         from ..agent import _get_max_output_tokens, _with_retry
         from ..tools import get_active_tool_definitions

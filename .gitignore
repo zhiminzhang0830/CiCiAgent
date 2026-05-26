@@ -1,11 +1,29 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
-# Environments
-.env
-.venv
-env/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+.venv/
 venv/
+env/
 ENV/
-env.bak/
-venv.bak/
+.eggs/
 
+# cici runtime
+.cici/logs/
+.cici/sessions/
+.cici/tool-results/
+
+# env / secrets
+.env
+.env.local
+
+# editors
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store

@@ -1,17 +1,12 @@
 """Tool abstractions — BaseTool / ToolRegistry / ToolExecutionContext / ToolResult.
 
-Mirrors OpenHarness's ``tools/base.py``. Individual tools subclass
-``BaseTool`` and are registered with a ``ToolRegistry``, which owns the
-``name -> tool`` mapping and generates the Anthropic Messages API schema.
+Individual tools subclass ``BaseTool`` and are registered with a
+``ToolRegistry``, which owns the ``name -> tool`` mapping and generates
+the Anthropic Messages API schema.
 
-This module is intentionally dependency-free (only ``pydantic``) so it can
-be imported from anywhere in ``ocsci.coding_agent`` without risking a
-circular import with ``tools.py`` / ``agent.py``.
-
-Phase 1 scope: pure additive. Nothing in the existing codebase imports
-from here yet. Phase 2 switches ``tools.py`` to build its ``ToolRegistry``
-from concrete ``BaseTool`` subclasses; phase 3 routes execution through
-the registry and the legacy ``execute_tool`` becomes a thin shim.
+This module is intentionally dependency-free (only ``pydantic``) so it
+can be imported from anywhere in the package without risking a circular
+import with ``tools.py`` / ``agent.py``.
 """
 
 from __future__ import annotations
@@ -161,9 +156,7 @@ def _strip_titles(obj: object) -> None:
 
     Pydantic emits a ``title`` for every field derived from the class
     name; the Anthropic API accepts them but they add noise without
-    changing semantics. Mirrors the helper in ``tool_models.py`` — the
-    duplicate goes away once ``tool_models`` consolidates onto this
-    module in a later phase.
+    changing semantics.
     """
     if isinstance(obj, dict):
         obj.pop("title", None)

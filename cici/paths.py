@@ -4,8 +4,8 @@ Everything — agent-owned state (sessions, memory, tool-result artifacts,
 plans) and user-authored config (settings.json, rules/, agents/, skills/) —
 lives under a single root:
 
-- User root:    `~/.coco`        (override with env var `COCO_HOME`)
-- Project root: `<cwd>/.coco`    (project-level overrides)
+- User root:    `~/.cici`        (override with env var `CICI_HOME`)
+- Project root: `<cwd>/.cici`    (project-level overrides)
 
 All other modules should import helpers from this file rather than hardcoding
 the root.
@@ -20,13 +20,13 @@ from pathlib import Path
 
 # Unified directory name used both under $HOME for user-level state/config
 # and under the project cwd for project-level overrides.
-DIRNAME = ".coco"
+DIRNAME = ".cici"
 CLAUDE_DIRNAME = ".claude"
 
 
 def user_home() -> Path:
-    """User-level root (~/.coco by default, override via COCO_HOME)."""
-    override = os.environ.get("COCO_HOME")
+    """User-level root (~/.cici by default, override via CICI_HOME)."""
+    override = os.environ.get("CICI_HOME")
     if override:
         return Path(override).expanduser()
     return Path.home() / DIRNAME
@@ -34,14 +34,14 @@ def user_home() -> Path:
 
 def claude_user_home() -> Path:
     """Claude home directory (~/.claude by default)."""
-    override = os.environ.get("COCO_HOME")
+    override = os.environ.get("CICI_HOME")
     if override:
         return Path(override).expanduser()
     return Path.home() / CLAUDE_DIRNAME
 
 
 def project_dir(directory: Path | None = None) -> Path:
-    """Project-level root (<directory or cwd>/.coco)."""
+    """Project-level root (<directory or cwd>/.cici)."""
     base = Path(directory) if directory is not None else Path.cwd()
     return base / DIRNAME
 
@@ -72,7 +72,7 @@ def scratchpad_dir(session_id: str) -> Path:
 
     Model-facing: this is the directory the agent should use instead of
     `/tmp` for intermediate artifacts, working files, or throwaway outputs.
-    Layout: ``~/.coco/scratchpad/<session_id>/``.
+    Layout: ``~/.cici/scratchpad/<session_id>/``.
     """
     return user_home() / "scratchpad" / session_id
 

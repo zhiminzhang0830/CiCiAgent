@@ -26,6 +26,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from .tools_base import _strip_titles
+
 # ─── File I/O ───────────────────────────────────────────────
 
 
@@ -149,10 +151,53 @@ class AgentInput(BaseModel):
         description="Short (3-5 word) description of the sub-agent's task"
     )
     prompt: str = Field(description="Detailed task instructions for the sub-agent")
-    type: Literal["explore", "plan", "general"] = Field(
+    type: str = Field(
         default="general",
-        description="Agent type. Default: general",
+        description=(
+            "Agent type. Built-ins: 'explore', 'plan', 'general'. Custom "
+            "agents from .claude/agents/*.md are also accepted. Default: general"
+        ),
     )
+    run_in_background: bool = Field(
+        default=False,
+        description=(
+            "If true, launch the sub-agent asynchronously and return "
+            "immediately with a task_id. Use agent_result to retrieve the "
+            "output. Default: false (blocks until completion)."
+        ),
+    )
+    timeout_sec: float | None = Field(
+        default=None,
+        gt=0,
+        description="Wall-clock timeout for the sub-agent in seconds. Default: 300.",
+    )
+
+
+class AgentResultInput(BaseModel):
+    """Arguments for the agent_result tool."""
+
+    task_id: str = Field(
+        description=(
+            "The task_id returned by the agent tool when the sub-agent "
+            "was launched in background mode."
+        )
+    )
+    wait_sec: float | None = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Optional: block up to this many seconds waiting for "
+            "completion (capped at 120). Default: 0 (non-blocking poll)."
+        ),
+    )
+
+
+class EnterPlanModeInput(BaseModel):
+    """Arguments for the enter_plan_mode tool (no fields)."""
+
+
+class ExitPlanModeInput(BaseModel):
+    """Arguments for the exit_plan_mode tool (no fields)."""
 
 
 class ToolSearchInput(BaseModel):
@@ -256,21 +301,6 @@ class TodoWriteInput(BaseModel):
     )
 
 
-# ─── web_search ─────────────────────────────────────────────
-
-
-class WebSearchInput(BaseModel):
-    """Arguments for the web_search tool."""
-
-    query: str = Field(description="Search query", min_length=1, max_length=500)
-    max_results: int = Field(
-        default=5,
-        ge=1,
-        le=20,
-        description="Maximum number of results to return (1-20)",
-    )
-
-
 # ─── schema helper ──────────────────────────────────────────
 
 
@@ -290,13 +320,3 @@ def to_tool_schema(name: str, description: str, model: type[BaseModel]) -> dict:
         "description": description,
         "input_schema": schema,
     }
-
-
-def _strip_titles(obj: object) -> None:
-    if isinstance(obj, dict):
-        obj.pop("title", None)
-        for v in obj.values():
-            _strip_titles(v)
-    elif isinstance(obj, list):
-        for v in obj:
-            _strip_titles(v)

@@ -1,5 +1,11 @@
-"""Memory system — 4-type file-based memory with MEMORY.md index.
-Mirrors Claude Code's memory architecture: semantic recall via sideQuery."""
+"""Persistent memory store for cici.
+
+Memories are markdown files (front-matter + body) grouped into four
+categories — ``user``, ``feedback``, ``project`` and ``reference`` — and
+indexed by ``MEMORY.md``. Each workspace gets its own isolated directory,
+keyed by a fingerprint of its absolute path. A pluggable ``SideQueryFn``
+lets the agent re-rank or summarise memories with the LLM on demand.
+"""
 
 from __future__ import annotations
 
@@ -27,7 +33,9 @@ MAX_INDEX_LINES = 200
 MAX_INDEX_BYTES = 25000
 
 
-class MemoryEntry:
+class MemoryRecord:
+    """An in-memory view of one memory file (front matter + body)."""
+
     __slots__ = ("name", "description", "type", "filename", "content")
 
     def __init__(
@@ -40,15 +48,18 @@ class MemoryEntry:
         self.content = content
 
 
+
+
 # ─── Paths ──────────────────────────────────────────────────
 
 
-def _project_hash() -> str:
+def _workspace_fingerprint() -> str:
+    """Stable short id for the current workspace, derived from its path."""
     return hashlib.sha256(str(Path.cwd()).encode()).hexdigest()[:16]
 
 
 def get_memory_dir() -> Path:
-    d = projects_dir() / _project_hash() / "memory"
+    d = projects_dir() / _workspace_fingerprint() / "memory"
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -58,8 +69,6 @@ def _get_index_path() -> Path:
 
 
 # ─── Slugify ────────────────────────────────────────────────
-
-
 def _slugify(text: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "_", text.lower())
     s = s.strip("_")
@@ -67,11 +76,9 @@ def _slugify(text: str) -> str:
 
 
 # ─── CRUD ───────────────────────────────────────────────────
-
-
-def list_memories() -> list[MemoryEntry]:
+def list_memories() -> list[MemoryRecord]:
     d = get_memory_dir()
-    entries: list[MemoryEntry] = []
+    entries: list[MemoryRecord] = []
     for f in sorted(d.glob("*.md")):
         if f.name == "MEMORY.md":
             continue
@@ -82,7 +89,7 @@ def list_memories() -> list[MemoryEntry]:
                 continue
             t = meta["type"] if meta["type"] in VALID_TYPES else "project"
             entries.append(
-                MemoryEntry(
+                MemoryRecord(
                     name=meta["name"],
                     description=meta.get("description", ""),
                     type=t,
@@ -118,8 +125,6 @@ def delete_memory(filename: str) -> bool:
 
 
 # ─── Index ──────────────────────────────────────────────────
-
-
 def _update_memory_index() -> None:
     memories = list_memories()
     lines = ["# Memory Index", ""]
@@ -145,8 +150,6 @@ def load_memory_index() -> str:
 
 
 # ─── Memory Header (lightweight scan) ──────────────────────
-
-
 class MemoryHeader:
     __slots__ = ("filename", "file_path", "mtime_ms", "description", "type")
 
@@ -317,8 +320,6 @@ async def select_relevant_memories(
 
 
 # ─── Prefetch Handle ────────────────────────────────────────
-
-
 class MemoryPrefetch:
     def __init__(self, task: asyncio.Task):
         self.task = task

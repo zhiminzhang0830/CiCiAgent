@@ -111,7 +111,7 @@ class McpConnection:
             {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {},
-                "clientInfo": {"name": "mini-claude", "version": "1.0.0"},
+                "clientInfo": {"name": "cici", "version": "0.1.0"},
             },
         )
         self._send_notification("notifications/initialized")
@@ -253,15 +253,15 @@ class McpManager:
 
         # 1. Global: ~/.claude/settings.json
         self._merge_config_file(claude_user_settings_file(), merged)
-        # 2. Global: ~/.coco/settings.json
+        # 2. Global: ~/.cici/settings.json
         self._merge_config_file(user_settings_file(), merged)
 
         # 3. Project: .claude/settings.json (higher priority)
         self._merge_config_file(claude_project_settings_file(), merged)
-        # 4. Project: .coco/settings.json
+        # 4. Project: .cici/settings.json
         self._merge_config_file(project_settings_file(), merged)
 
-        # 5. Also check .mcp.json (Claude Code convention)
+        # 5. Also check .mcp.json (common project-level convention)
         mcp_json_path = Path.cwd() / ".mcp.json"
         self._merge_config_file(mcp_json_path, merged)
 

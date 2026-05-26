@@ -1,5 +1,12 @@
-"""Skills system — discover, parse, and execute .claude/skills/*/SKILL.md
-Mirrors Claude Code's skill architecture: frontmatter metadata + prompt templates."""
+"""Skill discovery and prompt resolution.
+
+A *skill* is a directory containing a ``SKILL.md`` file whose YAML
+front matter describes the skill (name, description, allowed tools, …)
+and whose body is a prompt template. Skills can live in either
+``.cici/skills`` (preferred) or the legacy ``.claude/skills`` location,
+at user or project scope. Project-scoped skills override user-scoped
+ones with the same name.
+"""
 
 from __future__ import annotations
 
@@ -19,7 +26,9 @@ from .paths import (
 
 
 @dataclass
-class SkillDefinition:
+class Skill:
+    """A discovered skill, parsed from ``<skill-dir>/SKILL.md``."""
+
     name: str
     description: str
     when_to_use: str | None = None
@@ -31,26 +40,28 @@ class SkillDefinition:
     skill_dir: str = ""
 
 
+
+
 # ─── Discovery ──────────────────────────────────────────────
 
-_cached_skills: list[SkillDefinition] | None = None
+_cached_skills: list[Skill] | None = None
 
 
-def discover_skills() -> list[SkillDefinition]:
+def discover_skills() -> list[Skill]:
     global _cached_skills
     if _cached_skills is not None:
         return _cached_skills
 
-    skills: dict[str, SkillDefinition] = {}
+    skills: dict[str, Skill] = {}
 
     # User-level skills — .claude (lower priority)
     _load_skills_from_dir(claude_user_skills_dir(), "user", skills)
-    # User-level skills — .coco (lower priority)
+    # User-level skills — .cici (lower priority)
     _load_skills_from_dir(user_skills_dir(), "user", skills)
 
     # Project-level skills — .claude (higher priority, overwrites)
     _load_skills_from_dir(claude_project_skills_dir(), "project", skills)
-    # Project-level skills — .coco (higher priority, overwrites)
+    # Project-level skills — .cici (higher priority, overwrites)
     _load_skills_from_dir(project_skills_dir(), "project", skills)
 
     _cached_skills = list(skills.values())
@@ -58,7 +69,7 @@ def discover_skills() -> list[SkillDefinition]:
 
 
 def _load_skills_from_dir(
-    base_dir: Path, source: str, skills: dict[str, SkillDefinition]
+    base_dir: Path, source: str, skills: dict[str, Skill]
 ) -> None:
     if not base_dir.is_dir():
         return
@@ -75,7 +86,7 @@ def _load_skills_from_dir(
 
 def _parse_skill_file(
     file_path: Path, source: str, skill_dir: str
-) -> SkillDefinition | None:
+) -> Skill | None:
     try:
         raw = file_path.read_text()
         result = parse_frontmatter(raw)
@@ -98,7 +109,7 @@ def _parse_skill_file(
             else:
                 allowed_tools = [s.strip() for s in raw_tools.split(",")]
 
-        return SkillDefinition(
+        return Skill(
             name=name,
             description=meta.get("description", ""),
             when_to_use=meta.get("when_to_use") or meta.get("when-to-use"),
@@ -116,20 +127,20 @@ def _parse_skill_file(
 # ─── Resolution ─────────────────────────────────────────────
 
 
-def get_skill_by_name(name: str) -> SkillDefinition | None:
+def get_skill_by_name(name: str) -> Skill | None:
     for s in discover_skills():
         if s.name == name:
             return s
     return None
 
 
-def resolve_skill_prompt(skill: SkillDefinition, args: str) -> str:
+def resolve_skill_prompt(skill: Skill, args: str) -> str:
     import re
 
     prompt = skill.prompt_template
     prompt = re.sub(r"\$ARGUMENTS|\$\{ARGUMENTS\}", args, prompt)
     prompt = prompt.replace("${CLAUDE_SKILL_DIR}", skill.skill_dir)
-    prompt = prompt.replace("${COCO_SKILL_DIR}", skill.skill_dir)
+    prompt = prompt.replace("${CICI_SKILL_DIR}", skill.skill_dir)
     return prompt
 
 

@@ -1,6 +1,6 @@
 """Multi-tier context compression.
 
-Five layers, roughly mirroring Claude Code's query.ts pipeline:
+Five layers, applied in order from cheapest to most aggressive:
 
     Tier 1 — budget_tool_results_*  (per-message aggregate > 200K)
         Pick the largest non-pinned, non-already-processed tool_result
@@ -73,14 +73,14 @@ CONTEXT_COLLAPSE_PRESERVE_RECENT = 6
 # recover, which produces an identical oversized result on the next turn
 # that gets truncated again, forever. read_file already self-bounds via
 # offset/limit slicing and its own MAX_FILE_SIZE_BYTES, so it does not
-# need a second-line defence here. Mirrors hermes-agent's PINNED_THRESHOLDS.
+# need a second-line defence here.
 PINNED_TOOLS: frozenset[str] = frozenset({"read_file"})
 
 # Aggregate budget per user message (Anthropic) or per consecutive tool-role
-# message group (OpenAI). 200K chars matches Claude Code's
-# MAX_TOOL_RESULTS_PER_MESSAGE_CHARS (see
-# claude-code-main/src/constants/toolLimits.ts:49). Triggers are per-message
-# aggregate, not global utilization — a single turn with 10 parallel tool
+# message group (OpenAI). 200K chars is a heuristic ceiling that keeps a
+# single turn from blowing through the context window when many parallel
+# tool calls each return a moderate payload — triggers are per-message
+# aggregate, not global utilization, so a turn with 10 parallel tool
 # results each at 25K (none individually oversized) will still be caught.
 PER_MESSAGE_BUDGET_CHARS = 200_000
 
@@ -90,8 +90,7 @@ PER_MESSAGE_BUDGET_CHARS = 200_000
 # When a tool_result is too large to keep inline, we write the full content
 # to disk and replace it in-context with a preview + absolute path. The
 # model can then read the artifact back with `read_file` on demand —
-# information is not lost. This mirrors Claude Code's toolResultStorage.ts
-# persist+preview pattern.
+# information is not lost.
 ARTIFACT_DIR = artifacts_dir()
 TOOL_OUTPUT_PREVIEW_CHARS = 8_000
 
@@ -179,7 +178,7 @@ def find_tool_use_by_id(
 
 # ─── Tier 1: Per-message aggregate tool-result budget ───────
 #
-# Design (mirrors Claude Code's enforceToolResultBudget):
+# Design:
 #   For each user message whose tool_result blocks together exceed
 #   PER_MESSAGE_BUDGET_CHARS, pick the largest BUDGET-ELIGIBLE blocks and
 #   replace them via `persist_tool_result` (full content to disk, inline

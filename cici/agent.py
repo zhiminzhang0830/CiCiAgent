@@ -1,6 +1,10 @@
-"""Agent core loop — dual backend (Anthropic + OpenAI compatible), streaming,
-4-layer compression, plan mode, sub-agents, budget control.
-Mirrors Claude Code's agent architecture."""
+"""Agent core loop.
+
+Drives a single cici turn-by-turn conversation across either the
+Anthropic or an OpenAI-compatible backend, with streaming, sub-agent
+fork/return, plan-mode gating, four-tier context compression and
+budget controls (turn count + USD cost) layered on top.
+"""
 
 from __future__ import annotations
 
@@ -35,6 +39,7 @@ from .ui import (
     print_confirmation,
     print_cost,
     print_divider,
+    print_error,
     print_info,
     print_retry,
     print_sub_agent_end,
@@ -454,7 +459,7 @@ class Agent:
                 if mcp_defs:
                     self.tools = self.tools + mcp_defs
             except Exception as e:
-                print(f"[mcp] Init failed: {e}", flush=True)
+                print_error(f"[mcp] Init failed: {e}")
 
         self._aborted = False
         self._remember_user_goal(user_message)
@@ -631,7 +636,7 @@ class Agent:
     # ─── Large result persistence ─────────────────────────────────
     # When a tool result exceeds the inline limit, delegate to
     # compression.persist_tool_result which writes the full output to
-    # ~/.mini-claude/tool-results/ and returns a preview+path replacement.
+    # ~/.cici/tool-results/ and returns a preview+path replacement.
     # The same function is called from compression.budget_tool_results_*
     # at the aggregate-budget layer — single implementation, two triggers.
     #
@@ -729,7 +734,7 @@ class Agent:
             _log(f"ran: {(cmd[0] if cmd else '')[:160]}")
         elif tool_name in ("grep_search", "grep"):
             _log(f"grep: {str(tool_input.get('pattern') or '')[:160]}")
-        elif tool_name in ("glob_path", "list_files"):
+        elif tool_name == "list_files":
             _log(
                 f"list: {str(tool_input.get('pattern') or tool_input.get('path') or '')[:160]}"
             )
@@ -738,8 +743,6 @@ class Agent:
             if url:
                 _artifact(url)
                 _log(f"fetched {url}")
-        elif tool_name == "web_search":
-            _log(f"searched: {str(tool_input.get('query') or '')[:160]}")
         elif tool_name == "agent":
             _log(
                 f"sub-agent: {str(tool_input.get('description') or tool_input.get('type') or '')[:160]}"

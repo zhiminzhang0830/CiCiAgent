@@ -1,6 +1,12 @@
-"""Sub-agent system — fork-return pattern with built-in + custom agent types.
-Mirrors Claude Code's AgentTool: explore (read-only), plan (structured), general (full tools),
-plus user-defined agents via .claude/agents/*.md."""
+"""Sub-agent fork/return system.
+
+Provides three built-in agent profiles — ``explore`` (read-only repo
+inspection), ``plan`` (structured planning, no edits) and ``general``
+(full toolset) — and discovers user-defined agents from
+``.cici/agents/*.md`` (or the legacy ``.claude/agents/*.md`` location).
+The parent loop forks an isolated child agent, waits for its summary,
+and surfaces it back as a tool result.
+"""
 
 from __future__ import annotations
 
@@ -19,7 +25,7 @@ from .tools import tool_definitions
 
 READ_ONLY_TOOLS = {"read_file", "list_files", "grep_search"}
 
-EXPLORE_PROMPT = """You are a file search specialist for Mini Claude Code. You excel at thoroughly navigating and exploring codebases.
+EXPLORE_PROMPT = """You are a file search specialist for cici. You excel at thoroughly navigating and exploring codebases.
 
 === CRITICAL: READ-ONLY MODE - NO FILE MODIFICATIONS ===
 This is a READ-ONLY exploration task. You are STRICTLY PROHIBITED from:
@@ -65,7 +71,7 @@ Return a structured plan with:
 3. Critical files for implementation
 4. Potential risks or considerations"""
 
-GENERAL_PROMPT = """You are an agent for Mini Claude Code. Given the user's message, you should use the tools available to complete the task. Complete the task fully—don't gold-plate, but don't leave it half-done. When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.
+GENERAL_PROMPT = """You are an agent for cici. Given the user's message, you should use the tools available to complete the task. Complete the task fully—don't gold-plate, but don't leave it half-done. When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.
 
 Your strengths:
 - Searching for code, configurations, and patterns across large codebases
@@ -92,11 +98,11 @@ def _discover_custom_agents() -> dict[str, dict]:
     agents: dict[str, dict] = {}
     # User-level — .claude (lower priority)
     _load_agents_from_dir(claude_user_agents_dir(), agents)
-    # User-level — .coco (lower priority)
+    # User-level — .cici (lower priority)
     _load_agents_from_dir(user_agents_dir(), agents)
     # Project-level — .claude (higher priority, overwrites)
     _load_agents_from_dir(claude_project_agents_dir(), agents)
-    # Project-level — .coco (higher priority, overwrites)
+    # Project-level — .cici (higher priority, overwrites)
     _load_agents_from_dir(project_agents_dir(), agents)
 
     _cached_custom_agents = agents
