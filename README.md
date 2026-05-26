@@ -116,7 +116,7 @@ implemented and clearly marked in the source. Contributions welcome.
 
 ## Acknowledgements
 
-Inspired by [Claude Code](https://www.anthropic.com/claude-code), [aider](https://github.com/Aider-AI/aider), [opencode](https://github.com/sst/opencode), and the broader MCP ecosystem.
+Inspired by [Claude Code](https://www.anthropic.com/claude-code), [claude-code-from-scratch](https://github.com/Windy3f3f3f3f/claude-code-from-scratch), [aider](https://github.com/Aider-AI/aider), [opencode](https://github.com/sst/opencode), and the broader MCP ecosystem.
 
 ## License
 
